@@ -9,6 +9,12 @@ use Psr\Http\Message\RequestInterface;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 
+/**
+ * Class Whmcs
+ *
+ * @package Gufy\WhmcsPhp
+ * @method WhmcsResponse getclients()
+ */
 class Whmcs
 {
 
