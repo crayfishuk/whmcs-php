@@ -31,11 +31,14 @@ class Whmcs
     $client = $this->client();
     $clientHandler = $client->getConfig("handler");
     $parameters['action'] = $action;
-    $parameters['username'] = $this->config->getUsername();
-    if($this->config->getAuthType() == 'password')
+    if ($this->config->getAuthType() == 'password') {
+      $parameters['username'] = $this->config->getUsername();
       $parameters['password'] = $this->config->getPassword();
-    elseif($this->config->getAuthType() == 'keys')
-      $parameters['accesskey'] = $this->config->getPassword();
+    }
+    elseif ($this->config->getAuthType() == 'keys') {
+      $parameters['identifier'] = $this->config->getUsername();
+      $parameters['secret'] = $this->config->getPassword();
+    }
     $parameters['responsetype'] = 'json';
     try
     {
