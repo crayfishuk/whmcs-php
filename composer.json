@@ -1,5 +1,5 @@
 {
-    "name": "gufy/whmcs-php",
+    "name": "prolateral/whmcs-php",
     "description": "Unofficial WHMCS PHP Api Package",
     "require": {
         "php":">=5.6",
