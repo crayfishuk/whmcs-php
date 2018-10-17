@@ -2,127 +2,70 @@
 
 namespace Gufy\WhmcsPhp;
 
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\ClientException;
+use ArrayAccess;
 use Gufy\WhmcsPhp\Exceptions\ResponseException;
-use Psr\Http\Message\RequestInterface;
-use GuzzleHttp\Middleware;
-use GuzzleHttp\Psr7\Request;
+use Gufy\WhmcsPhp\Exceptions\ReadOnlyException;
 
-/**
- * Class Whmcs
- *
- * @package Gufy\WhmcsPhp
- * @method WhmcsResponse getclients()
- */
-class Whmcs
+class WhmcsResponse implements ArrayAccess
 {
 
-    private $callbacks = [];
-
-    /** @var Client */
-    static  $CLIENT;
-
-    /** @var RequestInterface */
-    private $request;
-
     /**
-     * Whmcs constructor.
-     *
-     * @param Config $config
+     * Original array of response
+     * @var array $response
      */
-    public function __construct(Config $config)
-    {
-        $this->config =& $config;
-    }
+    private $response;
 
     /**
-     * Static storage of the connection
-     *
-     * @param array $config
-     * @return Client
-     */
-    public function client($config = [])
-    {
-        if (self::$CLIENT == null) {
-            $config       = array_merge($config, []);
-            self::$CLIENT = new Client($config);
-        }
-        return self::$CLIENT;
-    }
-
-    public function execute($action, $arguments = [])
-    {
-        $parameters = isset($arguments[0]) ? $arguments[0] : [];
-
-        $class      = $this;
-        $tapHandler = Middleware::tap(function (RequestInterface $request) use ($class) {
-            $class->setRequest($request);
-        });
-
-        $client        = $this->client();
-        $clientHandler = $client->getConfig("handler");
-
-        $parameters['action'] = $action;
-
-        if ($this->config->getAuthType() == 'password') {
-            $parameters['username'] = $this->config->getUsername();
-            $parameters['password'] = $this->config->getPassword();
-        } elseif ($this->config->getAuthType() == 'keys') {
-            $parameters['identifier'] = $this->config->getUsername();
-            $parameters['secret']     = $this->config->getPassword();
-        }
-        $parameters['responsetype'] = 'json';
-        try {
-            $response = $client->post($this->config->getBaseUrl(), ['form_params' => $parameters, 'timeout' => 1200, 'connect_timeout' => 10, 'handler' => $tapHandler($clientHandler)]);
-            return $this->processResponse(json_decode($response->getBody()->getContents(), true));
-        } catch (ClientException $e) {
-            $response = json_decode($e->getResponse()->getBody()->getContents(), true);
-            throw new ResponseException($response['message']);
-        }
-    }
-
-    /**
-     * Setter for request
-     *
-     * @param RequestInterface $request
-     */
-    public function setRequest(RequestInterface $request)
-    {
-        $this->request = $request;
-    }
-
-    /**
-     * Getter for request
-     *
-     * @return mixed
-     */
-    public function getRequest()
-    {
-        return $this->request;
-    }
-
-    /**
-     * Convert reponse to WhmcsResponse type
+     * WhmcsResponse constructor.
      *
      * @param $response
-     * @return WhmcsResponse
      * @throws ResponseException
      */
-    public function processResponse($response)
+    public function __construct($response)
     {
-        return new WhmcsResponse($response);
+        $this->response = $response;
+        if (false === $this->isSuccess()) {
+            throw new ResponseException($this->message);
+        }
     }
 
     /**
-     * Magic function to call remote API functions
+     * Check if the call was a success
      *
-     * @param       $function
-     * @param array $arguments
+     * @return bool
+     */
+    public function isSuccess()
+    {
+        return $this->result == 'success';
+    }
+
+    /**
+     *  Magic Getter
+     * @param $var
      * @return mixed
      */
-    public function __call($function, array $arguments = [])
+    public function __get($var)
     {
-        return call_user_func_array([$this, 'execute'], [$function, $arguments]);
+        return $this->response[ $var ];
+    }
+
+    public function offsetGet($var)
+    {
+        return $this->response[ $var ];
+    }
+
+    public function offsetSet($var, $value = '')
+    {
+        throw new ReadOnlyException($var);
+    }
+
+    public function offsetExists($var)
+    {
+        return isset($this->response[ $var ]);
+    }
+
+    public function offsetUnset($var)
+    {
+        throw new ReadOnlyException($var);
     }
 }
