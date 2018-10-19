@@ -14,6 +14,9 @@ use GuzzleHttp\Psr7\Request;
  *
  * @package Gufy\WhmcsPhp
  * @method WhmcsResponse getclients()
+ * @method WhmcsResponse getproducts()
+ * @method WhmcsResponse addorder()
+ * @method WhmcsResponse getpaymentmethods()
  */
 class Whmcs
 {
