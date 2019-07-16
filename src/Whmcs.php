@@ -1,10 +1,11 @@
-<?php
+<?php 
 
 namespace Gufy\WhmcsPhp;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use Gufy\WhmcsPhp\Exceptions\ResponseException;
+use Closure;
 use Psr\Http\Message\RequestInterface;
 use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
@@ -13,34 +14,34 @@ use GuzzleHttp\Psr7\Request;
  * Class Whmcs
  *
  * @package Gufy\WhmcsPhp
- * @method WhmcsResponse getclients()
- * @method WhmcsResponse getproducts()
- * @method WhmcsResponse addorder()
- * @method WhmcsResponse getpaymentmethods()
+ *
+ * The following methods are all available
+ * @method WhmcsResponse GetPaymentMethods() =
+ * (object)['totalresults' => 0, 'startnumer' => 0, 'numreturned' => 0, 'clients' => []]
+ * @method WhmcsResponse GetProducts($params = ['pid' => 0, 'gid' => 0, 'module' => 'modulename'])
+ * @method WhmcsResponse GetClients()
+ * @method WhmcsResponse AddOrder($param = ['clientid'=>1,'pid'=> 2,'paymentmethod'=>'directdebit','billingcycle'  => 'monthly']) = (object)['orderid'=>0,'invoiceid'=>0]
+ *
+ *
+ * // Partner Credits are 'one time' == 'monthly'
+ * 'billingcycle'  => 'monthly',)
  */
 class Whmcs
 {
 
     private $callbacks = [];
 
-    /** @var Client */
-    static  $CLIENT;
+    static $CLIENT;
 
-    /** @var RequestInterface */
     private $request;
 
-    /**
-     * Whmcs constructor.
-     *
-     * @param Config $config
-     */
     public function __construct(Config $config)
     {
         $this->config =& $config;
     }
 
     /**
-     * Static storage of the connection
+     * Singleton class for the REST connection to the remote server (i.e. the REST client)
      *
      * @param array $config
      * @return Client
@@ -54,10 +55,19 @@ class Whmcs
         return self::$CLIENT;
     }
 
-    public function execute($action, $arguments = [])
+    /**
+     * Call the WHMCS system with the action and parameters specified.
+     *
+     * Actually collects and construct the parameters for the API call - set $this->request and returns the response
+     *
+     * @param $action
+     * @param $arguments
+     * @return WhmcsResponse
+     * @throws ResponseException
+     */
+    public function execute($action, $arguments)
     {
-        $parameters = isset($arguments[0]) ? $arguments[0] : [];
-
+        // Create a handler for the response that sets $this->request
         $class      = $this;
         $tapHandler = Middleware::tap(function (RequestInterface $request) use ($class) {
             $class->setRequest($request);
@@ -66,27 +76,42 @@ class Whmcs
         $client        = $this->client();
         $clientHandler = $client->getConfig("handler");
 
-        $parameters['action'] = $action;
+        // First (and only) argument is the additional parameters for the API call
+        if (isset($arguments[0])) {
+            $parameters = $arguments[0];
+        }
+
+        // Get the action name from the magic function name and populate the other mandatory fields
+        $parameters['action']   = $action;
+        $parameters['username'] = $this->config->getUsername();
 
         if ($this->config->getAuthType() == 'password') {
-            $parameters['username'] = $this->config->getUsername();
-            $parameters['password'] = $this->config->getPassword();
+            $parameters['username'] = $this->config->getPassword();
         } elseif ($this->config->getAuthType() == 'keys') {
-            $parameters['identifier'] = $this->config->getUsername();
-            $parameters['secret']     = $this->config->getPassword();
+            $parameters['password'] = $this->config->getPassword();
         }
         $parameters['responsetype'] = 'json';
+
         try {
-            $response = $client->post($this->config->getBaseUrl(), ['form_params' => $parameters, 'timeout' => 1200, 'connect_timeout' => 10, 'handler' => $tapHandler($clientHandler)]);
+            $response = $client->post($this->config->getBaseUrl(),
+                                      [
+                                          'form_params'     => $parameters,
+                                          'timeout'         => 1200,
+                                          'connect_timeout' => 10,
+                                          'handler'         => $tapHandler($clientHandler),
+                                      ]);
             return $this->processResponse(json_decode($response->getBody()->getContents(), true));
+
         } catch (ClientException $e) {
+
             $response = json_decode($e->getResponse()->getBody()->getContents(), true);
             throw new ResponseException($response['message']);
+
         }
     }
 
     /**
-     * Setter for request
+     * Save the request for access after the handler finishes
      *
      * @param RequestInterface $request
      */
@@ -96,7 +121,7 @@ class Whmcs
     }
 
     /**
-     * Getter for request
+     * Provide access to the request
      *
      * @return mixed
      */
@@ -106,7 +131,7 @@ class Whmcs
     }
 
     /**
-     * Convert reponse to WhmcsResponse type
+     * Parse and process the response
      *
      * @param $response
      * @return WhmcsResponse
@@ -118,7 +143,7 @@ class Whmcs
     }
 
     /**
-     * Magic function to call remote API functions
+     * Magic function that generates an API call for any action from the function name
      *
      * @param       $function
      * @param array $arguments
