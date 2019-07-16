@@ -1,18 +1,19 @@
-<?php
-
-namespace Gufy\WhmcsPhp;
+<?php namespace Gufy\WhmcsPhp;
 
 use ArrayAccess;
 use Gufy\WhmcsPhp\Exceptions\ResponseException;
 use Gufy\WhmcsPhp\Exceptions\ReadOnlyException;
 
+/**
+ * Class WhmcsResponse
+ *
+ * @package Gufy\WhmcsPhp
+ * @property string $result
+ */
 class WhmcsResponse implements ArrayAccess
 {
 
-    /**
-     * Original array of response
-     * @var array $response
-     */
+    /** @var WhmcsResponse */
     private $response;
 
     /**
@@ -30,8 +31,6 @@ class WhmcsResponse implements ArrayAccess
     }
 
     /**
-     * Check if the call was a success
-     *
      * @return bool
      */
     public function isSuccess()
@@ -40,7 +39,6 @@ class WhmcsResponse implements ArrayAccess
     }
 
     /**
-     *  Magic Getter
      * @param $var
      * @return mixed
      */
@@ -49,21 +47,38 @@ class WhmcsResponse implements ArrayAccess
         return $this->response[ $var ];
     }
 
+    /**
+     * @param mixed $var
+     * @return mixed
+     */
     public function offsetGet($var)
     {
         return $this->response[ $var ];
     }
 
+    /**
+     * @param mixed  $var
+     * @param string $value
+     * @throws ReadOnlyException
+     */
     public function offsetSet($var, $value = '')
     {
         throw new ReadOnlyException($var);
     }
 
+    /**
+     * @param mixed $var
+     * @return bool
+     */
     public function offsetExists($var)
     {
         return isset($this->response[ $var ]);
     }
 
+    /**
+     * @param mixed $var
+     * @throws ReadOnlyException
+     */
     public function offsetUnset($var)
     {
         throw new ReadOnlyException($var);
