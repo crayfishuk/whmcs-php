@@ -9,6 +9,22 @@ use Gufy\WhmcsPhp\Exceptions\ReadOnlyException;
  *
  * @package Gufy\WhmcsPhp
  * @property string $result
+ *
+ * Magic properties from WHMCS API return values - may or may not exist depending on API method used
+ * @property int $totalresults
+ *
+ * // getProducts
+ * @property array $products
+ *
+ * // getClients
+ * @property array $clients
+ *
+ * // getPaymentMethodOptions & getPaymentMethods
+ * @property array $paymentmethods
+ *
+ * // raiseNewCreditOrder
+ * @property int $orderid
+ * @property int $invoiceid
  */
 class WhmcsResponse implements ArrayAccess
 {
