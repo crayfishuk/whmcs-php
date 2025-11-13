@@ -49,7 +49,7 @@ class WhmcsResponse implements ArrayAccess
     /**
      * @return bool
      */
-    public function isSuccess()
+    public function isSuccess(): bool
     {
         return $this->result == 'success';
     }
@@ -58,7 +58,7 @@ class WhmcsResponse implements ArrayAccess
      * @param $var
      * @return mixed
      */
-    public function __get($var)
+    public function __get($var): mixed
     {
         return $this->response[ $var ];
     }
@@ -67,7 +67,7 @@ class WhmcsResponse implements ArrayAccess
      * @param mixed $var
      * @return mixed
      */
-    public function offsetGet($var)
+    public function offsetGet($var): mixed
     {
         return $this->response[ $var ];
     }
@@ -77,7 +77,7 @@ class WhmcsResponse implements ArrayAccess
      * @param string $value
      * @throws ReadOnlyException
      */
-    public function offsetSet($var, $value = '')
+    public function offsetSet($var, $value = ''): void
     {
         throw new ReadOnlyException($var);
     }
@@ -86,7 +86,7 @@ class WhmcsResponse implements ArrayAccess
      * @param mixed $var
      * @return bool
      */
-    public function offsetExists($var)
+    public function offsetExists($var): bool
     {
         return isset($this->response[ $var ]);
     }
@@ -95,7 +95,7 @@ class WhmcsResponse implements ArrayAccess
      * @param mixed $var
      * @throws ReadOnlyException
      */
-    public function offsetUnset($var)
+    public function offsetUnset($var): void
     {
         throw new ReadOnlyException($var);
     }
