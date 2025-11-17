@@ -35,6 +35,8 @@ class Whmcs
 
     private $request;
 
+    private $config;
+
     public function __construct(Config $config)
     {
         $this->config =& $config;
@@ -86,9 +88,9 @@ class Whmcs
         $parameters['username'] = $this->config->getUsername();
 
         if ($this->config->getAuthType() == 'password') {
-            $parameters['username'] = $this->config->getPassword();
-        } elseif ($this->config->getAuthType() == 'keys') {
             $parameters['password'] = $this->config->getPassword();
+        } elseif ($this->config->getAuthType() == 'keys') {
+            $parameters['accesskey'] = $this->config->getPassword();
         }
         $parameters['responsetype'] = 'json';
 
